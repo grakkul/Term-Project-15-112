@@ -19,6 +19,7 @@ short description:
 	Downgrades will come randomly for a few seconds
 	
 structural plan:
+
 	Classes:
 		Player info
 		Enemy info - if there is a enemy
