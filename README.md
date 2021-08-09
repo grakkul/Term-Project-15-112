@@ -33,4 +33,6 @@ structural plan:
 		
 algorithmic plan:
 	most difficult: 
-		dont know yet
+		user analysis
+		    - how have they lost theri lives?
+		    - new lvl generation taylored to be harder
