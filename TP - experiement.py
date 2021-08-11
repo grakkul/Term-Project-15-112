@@ -247,8 +247,7 @@ def timerFired(app): #do downgrades
     # use randome.triange(lo,hi,mode) or standard deviation????
     #-----------------------------------------------------------------\/
     # how to use derivation to influence spawn location???????????
-        #have spawn closer to hump?? how
-     
+        #have spawn closer to hump?? how    
 
 def sumLists(app): #1d list of Rows and Cols//int of total Sum
     for row in range(app.rows):
@@ -316,16 +315,6 @@ def platformUpdates(app):
 def distance(x0,y0,x1,y1):
 	return ((x1-x0)**2 + (y1-y0)**2)**.5
 
-def checkPlatformIsLegal(self,app): #NOT FINFINISHED
-    return
-            # if self.posX - self.width < other.posX < self.posX + self.width:
-            #     if distance(0, self.posY, 0, other.posY) <= 2*self.width:
-            #         return True
-
-            # if self.posY - self.height < other.posY < self.posY + self.height:
-            #     if distance(self.posX, 0, other.posX, 0) <= 3*self.height:
-            #         return True
-
 #citation: derived from sdRows formula
 def standardDeviation(L): #standard deviation forumla
     total=0
@@ -340,6 +329,30 @@ def standardDeviation(L): #standard deviation forumla
         
     sdRows = ((numerator)/sum(L))**0.5
     return sdRows
+
+#citation: taken from my hw5
+def getCell(app, x, y):
+    gridWidth  = app.width
+    gridHeight = app.height 
+    cellWidth  = gridWidth / app.cols
+    cellHeight = gridHeight / app.rows
+    row = int((y) / cellHeight)
+    col = int((x) / cellWidth)
+    return (row, col)
+
+#citation: taken from my hw9: tetris
+def getCellBounds(app, row, col):
+    gridWidth  = app.width 
+    gridHeight = app.height 
+    cellWidth = gridWidth / app.cols
+    cellHeight = gridHeight / app.rows
+
+    x0 =  col * cellWidth
+    x1 = (col+1) * cellWidth
+    y0 = row * cellHeight
+    y1 = (row+1) * cellHeight
+
+    return (x0, y0, x1, y1)
 
 def redrawAll(app,canvas):
     if app.gameOver:
@@ -380,30 +393,7 @@ def drawGameOver(app,canvas):
     canvas.create_text(app.width/2,app.height/2, text = f'Final Score: {app.score}', fill = 'crimson', font = 'Helvetica 20 bold')
     canvas.create_text(app.width/2,app.height/2 + 100, text = "Press 'r' to Reset", fill = 'crimson', font = 'Helvetica 20 bold')
 
-#citation: taken from my hw5
-def getCell(app, x, y):
-    gridWidth  = app.width
-    gridHeight = app.height 
-    cellWidth  = gridWidth / app.cols
-    cellHeight = gridHeight / app.rows
-    row = int((y) / cellHeight)
-    col = int((x) / cellWidth)
-    return (row, col)
-
-#citation: taken from my hw9: tetris
-def getCellBounds(app, row, col):
-    gridWidth  = app.width 
-    gridHeight = app.height 
-    cellWidth = gridWidth / app.cols
-    cellHeight = gridHeight / app.rows
-
-    x0 =  col * cellWidth
-    x1 = (col+1) * cellWidth
-    y0 = row * cellHeight
-    y1 = (row+1) * cellHeight
-
-    return (x0, y0, x1, y1)
-
+#temporary --- used in building algorithm
 def drawGrid(app,canvas):
     for row in range(app.rows):
         for col in range(app.cols):
