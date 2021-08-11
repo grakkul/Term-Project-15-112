@@ -15,27 +15,29 @@ from cmu_112_graphics import *
 import random
 import time
 
-class Player(object): #init//gravity//control//update
+class Player(object): #init//gravity//control//update//draw
     #class for player
-
-    def __init__(self, radius = 25, spawn = (100,340),color = 'aquamarine'):
+    def __init__(self, radius = 25, spawn = (480,420),color = 'aquamarine'):
         self.moveX = 0                      #change in horizontal movement 
         self.moveY = 0                      #change in vertical movement 
+
         self.radius = radius                #size
         self.spawnX, self.spawnY = spawn    #spawn pos
         self.posX = self.spawnX             #current X pos
         self.posY = self.spawnY             #current Y pos
+
+        self.invincible = False
         self.color = color
     
     def gravity(self,app):      #constantly moving player down//call every second
         self.moveY += 6.4  
-
-        #MOVE TO GAME OVER??     
-        if (self.posY) > app.height or (self.posX) > app.width or (self.posX) < 0:  #if player goes off screen
+     
+        if (self.posY) > app.height or (self.posY) < 0 or (self.posX) > app.width or (self.posX) < 0:  #if player goes off screen
             self.moveY = 0
             self.moveX = 0
             self.posY = self.spawnY
             self.posX = self.spawnX
+            app.lifes -= 1
     
     def control(self,x,y):      #changes player movement//call in key pressed
         self.moveX += x
@@ -46,60 +48,60 @@ class Player(object): #init//gravity//control//update
         self.posY += self.moveY
 
     def draw(self,canvas):      #draw player
-        canvas.create_rectangle(self.posX - self.radius, self.posY - self.radius, 
+        canvas.create_oval(self.posX - self.radius, self.posY - self.radius, 
                                 self.posX + self.radius, self.posY + self.radius,
                                 fill = self.color, outline = self.color)
-    
-    # def jump(self,other):
-    #     for i in range(len(other)):
-    #         if self.posY == other[i].posY - other[i].height - self.radius:
-    #             return True
-    #         else:
-    #             return False
 
-class Platform(object): #problems
+class Platform(object): #init//draw//collision//update//move
     def __init__(self,app,color = 'black'):
         self.width = random.randint(50,200)
         self.height = 15
         self.color = color
-        self.choice = random.randint(0,1)
         self.direction = random.choice([-1,1])
 
-        self.spawnX = random.randint(app.width - 100,app.width + 50)
+        self.choiceDirection = random.randint(0,1)
+        self.choiceMove = random.randint(0,1)
+
+        self.spawnX = random.randint(app.width - 100,app.width + 50)  
         self.spawnY = random.randint(100,app.height - self.height)
+
         self.posX = self.spawnX
         self.posY = self.spawnY
         
-
     def draw(self,canvas):
-        if self.choice == 0:
+        if self.choiceDirection == 0:
             canvas.create_rectangle(self.posX - self.width, self.posY - self.height, 
-                                            self.posX + self.width, self.posY + self.height, fill = self.color)
+                                    self.posX + self.width, self.posY + self.height, fill = self.color, outline = self.color)
         else:                   
-            canvas.create_rectangle(self.posY - self.height,self.posX - self.width, 
-                                            self.posY + self.height, self.posX + self.width, fill = self.color)  
+            canvas.create_rectangle(self.posY - self.height, self.posX - self.width, 
+                                    self.posY + self.height, self.posX + self.width, fill = self.color, outline = self.color) 
+                                                        
         # sideways = canvas.create_polygon()
-              
-    def collides(self,other):       # STRUGGLE
-        if isinstance(other,Player):
-        #if other is ball
-            #problem ---------# w/checking if from top
-            if self.posX - self.width < other.posX < self.posX + self.width and other.posY < self.posY: 
-                # if distance(0, self.posY, 0, other.posY) <= other.radius + self.height:
-                if abs(self.posY - other.posY) <= other.radius + self.height:
-                    return True
 
-            if self.posY - self.height < other.posY < self.posY + self.height and other.posX < self.posX:
-                # if distance(self.posX, 0, other.posX, 0) <= other.radius + self.width:
-                if abs(self.posX - other.posX) <= other.radius + self.width:
-                    return True
-        return False
+    def checkPointCollison(self,x,y):
+        if self.choiceDirection == 0:
+            return (self.posX - self.width < x < self.posX + self.width and self.posY - self.height <  y < self.posY + self.height)
+        else:
+            return (self.posY - self.height < x < self.posY + self.height and self.posX - self.width <  y < self.posX + self.width)
+      
+    def collides(self,other):       
+        if self.checkPointCollison(other.posX - other.radius,other.posY - other.radius):
+            return True
+        elif self.checkPointCollison(other.posX - other.radius,other.posY + other.radius):
+            return True
+        elif self.checkPointCollison(other.posX + other.radius,other.posY + other.radius):
+            return True
+        elif self.checkPointCollison(other.posX + other.radius,other.posY - other.radius):
+            return True
+        else:
+            return False
 
     def update(self,app):           #updates player pos//call every second
-        self.posX -= (20 + (app.time/1000)*.5) #app.time/100
+        self.posX -= (20 + (app.time/1000)*.5)
 
-    def move(self,app):
-        if self.choice == 0:
+    def move(self):                 #moves platforms up and down
+        if self.choiceMove == 0:
+            self.color = 'slate blue'
             range = self.height * 3
 
             if self.posY <= self.spawnY - range: 
@@ -113,21 +115,48 @@ class Platform(object): #problems
 
 def appStarted(app):
     app.topScore = 0
+    app.backColor = ['white','SpringGreen','DeepSkyBlue','MediumPurple','DeepPink','crimson']
+    reset(app)
+
+def reset(app): #what gets called when reset game
+    app.gameOver = False
     app.score = 0
     app.time = 0
-    app.counter = 0
-    # app.backColor = 'white'
-    app.backColor = ['white','SpringGreen','DeepSkyBlue','MediumPurple','DeepPink','crimson']
+    app.seconds = 0
     app.lifes = 3
+    app.invincibleTime = 0
     
-
     app.player = Player()
     app.platforms = []
-    for i in range(random.randint(5,8)):    #how make sure spawn a distance away
+    for i in range(random.randint(5,9)):    #how make sure spawn a distance away
         app.platforms.append(Platform(app)) 
+    
+    userAnalysis(app)
+   
+def userAnalysis(app): 
+    app.rows = app.height // (app.player.radius*4) # == 9
+    app.cols = app.width // (app.player.radius*4) # == 10
 
-def keyPressed(app,event):
+    app.twoDL = []
+    app.sumRow = []
+    app.sumCol = []
+    app.sumTotal = 0
+
+    for row in range(app.rows):
+        app.twoDL += [[0]*app.cols]
+        app.sumRow.append(0)
+
+    for col in range(app.cols):
+        app.sumCol.append(0)
+
+def keyPressed(app,event): #player movement
     key = event.key
+
+    if key == 'r':
+        reset(app)
+
+    if app.gameOver:
+        return
 
     if key == 'Up' or key == 'Space' or key == 'w':
         app.player.moveY = 0
@@ -141,25 +170,76 @@ def keyPressed(app,event):
         app.player.moveX = 0
         app.player.control(-10, 0)
 
-def timerFired(app): #Problems
+def timerFired(app): #do downgrades
+    if app.gameOver:
+        return
+
     app.time += 100
     app.score = app.time//1000
-    app.counter += 1//10    #seconds
+
+    if time.time() > app.invincibleTime + 3:
+        app.player.invincible = False
 
     platformUpdates(app)
     app.player.update()
     app.player.gravity(app)
 
-    # print(app.time % 10000000000)
-
-    # if app.time % 10000000000:  #TROUBLE
-    #     lvl = random.randint(0,2)
-    #     # downgrades(app,lvl)
+    if app.lifes <= 0:
+        app.gameOver = True
 
     if app.score > app.topScore:
         app.topScore = app.score
 
-def downgrades(app,lvl):
+    #if done with MVP do downgrades
+        #DOWNGRADES CALLING -------------
+        # print(app.time % 10000000000) 
+        # if app.time % 10000000000:  #TROUBLE
+        #     lvl = random.randint(0,2)
+        #     # downgrades(app,lvl)
+        #-----------------------------------
+
+    #find ball locastion, add 1 for every app.time//100 spent in there.
+    playerRow, playerCol = getCell(app, app.player.posX, app.player.posY)
+    app.twoDL[playerRow][playerCol] += 1
+
+    #make 1D lists for sumRow and sumCol and sumTotal----
+    sumLists(app)
+
+    print('row',app.sumRow)
+    print('col',app.sumCol)
+    print('total',app.sumTotal)
+
+    #-IN DEVELOPMENT------------------------------------------------------------- \/
+    #use sums to get proabablity
+
+    num = random.randint(0,100)
+    # if num is in sumCol[i]/sumTotal spawn in that  col
+    # if num is in sumRow[i]/sumTotal spawn in that row
+    
+
+
+def sumLists(app): #1d list of Rows and Cols//int of total Sum
+    for row in range(app.rows):
+        app.sumRow[row] = 0
+        for col in range(app.cols):
+            app.sumRow[row] += app.twoDL[row][col]  
+
+    for col in range(app.cols):
+        app.sumCol[col] = 0
+        for row in range(app.rows):
+            app.sumCol[col] += app.twoDL[row][col]             
+    
+    app.sumTotal = sumTotal(app)
+
+def sumTotal(app): #total sum
+        total = 0
+        for row in range(app.rows):
+            for col in range(app.cols):
+                num = app.twoDL[row][col]
+                total += num
+        return total
+    
+def downgrades(app,lvl): #do when MVP acheived
     if lvl == 0:
         return
 
@@ -175,27 +255,27 @@ def downgrades(app,lvl):
             if app.score % 3:
                 app.backColor = 'white'
 
-def platformUpdates(app): #Problems
+def platformUpdates(app): 
     i = 0
     while i in range(len(app.platforms)):
-
         platform = app.platforms[i]
-        if platform.collides(app.player):     #collison - keeps taking too much damgae 
-            #restart
-            app.lifes -= 1
-            if app.lifes == 0:
-                appStarted(app)
-        
+
         platform.update(app)    #updates position of platform
-
-        #make every few move --> for m in range(len(app.platforms),2): 
-        #how make come back down
-        platform.move(app)
+        platform.move()         #make every few move
     
-        # if platform.posX + platform.width < app.width/2:    #new platforms
-        #     app.platforms.append(Platform(app)) #how to not summon an army
+        if app.player.invincible == False:  #color switch for invisible    
+            app.player.color = 'aquamarine'
+        else:
+            app.player.color = 'DodgerBlue2'
 
-        if platform.posX + platform.width < 0:
+        if platform.collides(app.player):     #collison - keeps taking too much damgae 
+            if app.player.invincible == False:
+                app.lifes -= 1
+
+            app.player.invincible = True
+            app.invincibleTime = time.time()
+
+        if platform.posX + platform.width < 0:  #summons new platforms and pops old ones
             app.platforms.append(Platform(app)) 
             app.platforms.pop(i)
         else:
@@ -215,34 +295,73 @@ def checkPlatformIsLegal(self,app):
             #         return True
 
 def redrawAll(app,canvas):
-    drawBackground(app,canvas)
-    drawPlatforms(app,canvas)
-    drawPlayer(app,canvas)
-    drawScore(app,canvas)
+    if app.gameOver:
+        drawGameOver(app,canvas)
+    else:
+        drawBackground(app,canvas)
+        drawPlatforms(app,canvas)
+        drawPlayer(app,canvas)
+        drawScore(app,canvas)
+        drawGrid(app,canvas)
     
-def drawBackground(app,canvas):
+def drawBackground(app,canvas):  # how to filter through???
     # i = 0
     # while i in range(len(app.backColor)):
+    #     if app.score % 10:
+    #         i += 1
     #     canvas.create_rectangle(0,0,app.width,app.height, fill = app.backColor[i])
-    i = 0
-    if app.counter % 10:
-        i += 1
-    canvas.create_rectangle(0,0,app.width,app.height, fill = app.backColor[i])
+   
+    canvas.create_rectangle(0,0,app.width,app.height, fill = app.backColor[0])
 
 def drawPlatforms(app,canvas):
     for i in range(len(app.platforms)):
         app.platforms[i].draw(canvas)
 
-
 def drawPlayer(app,canvas): 
     app.player.draw(canvas)
     
-
 def drawScore(app,canvas):
-    canvas.create_text(app.width*(2/3), 20, text = f'Score: {app.score}', font = 'Helvetica 20 bold', fill = 'crimson')
+    canvas.create_text(app.width/2, 20, text = f'Score: {app.score}', font = 'Helvetica 20 bold', fill = 'crimson')
 
-    canvas.create_text(app.width/3, 20, text = f'Top Score: {app.topScore}', font = 'Helvetica 20 bold', fill = 'crimson')
-    canvas.create_text(20, 20, text = f'lifes: {app.lifes}', font = 'Helvetica 20 bold', fill = 'crimson', anchor = 'w')
+    canvas.create_text(app.width*(.8), 20, text = f'Top Score: {app.topScore}', font = 'Helvetica 20 bold', fill = 'crimson', anchor = 'w')
+    canvas.create_text(20, 20, text = f'Lifes: {app.lifes}', font = 'Helvetica 20 bold', fill = 'crimson', anchor = 'w')
 
+def drawGameOver(app,canvas):
+    canvas.create_rectangle(0,0,app.width,app.height, fill = 'black')
+    canvas.create_text(app.width/2,100, text = f'GAME OVER', fill = 'crimson', font = 'Helvetica 46 bold')
+    canvas.create_text(app.width/2,app.height/2 - 40, text = f'Best Score: {app.topScore}', fill = 'crimson', font = 'Helvetica 20 bold')
+    canvas.create_text(app.width/2,app.height/2, text = f'Final Score: {app.score}', fill = 'crimson', font = 'Helvetica 20 bold')
+    canvas.create_text(app.width/2,app.height/2 + 100, text = "Press 'r' to Reset", fill = 'crimson', font = 'Helvetica 20 bold')
+
+#taken from my hw5
+def getCell(app, x, y):
+    gridWidth  = app.width
+    gridHeight = app.height 
+    cellWidth  = gridWidth / app.cols
+    cellHeight = gridHeight / app.rows
+    row = int((y) / cellHeight)
+    col = int((x) / cellWidth)
+    return (row, col)
+
+#taken from my hw9: tetris
+def getCellBounds(app, row, col):
+    gridWidth  = app.width 
+    gridHeight = app.height 
+    cellWidth = gridWidth / app.cols
+    cellHeight = gridHeight / app.rows
+
+    x0 =  col * cellWidth
+    x1 = (col+1) * cellWidth
+    y0 = row * cellHeight
+    y1 = (row+1) * cellHeight
+
+    return (x0, y0, x1, y1)
+
+def drawGrid(app,canvas):
+    for row in range(app.rows):
+        for col in range(app.cols):
+            x0,y0,x1,y1 = getCellBounds(app, row, col)
+            canvas.create_rectangle(x0,y0,x1,y1)
+            canvas.create_text(x0 + app.player.radius, y0 + app.player.radius, text = app.twoDL[row][col])
 
 runApp(width = 1000, height = 900)
