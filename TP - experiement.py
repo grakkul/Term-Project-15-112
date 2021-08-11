@@ -113,6 +113,15 @@ class Platform(object): #init//draw//collision//update//move
         else:
             self.posY = self.posY
 
+class NewPlatform(Platform):
+    def __init__(self,app):
+        super().__init__(app)
+        if self.choiceDirection == 0:
+            self.spawnY = random.randint(int(app.player.posY - app.sdRowsBounds[1]), int(app.player.posY + app.sdRowsBounds[3]))
+        else:
+            self.spawnX = random.randint(int(app.player.posY - app.sdColsBounds[0]), int(app.player.posY + app.sdColsBounds[2]))
+
+
 def appStarted(app):
     app.topScore = 0
     app.backColor = ['white','SpringGreen','DeepSkyBlue','MediumPurple','DeepPink','crimson']
@@ -136,6 +145,11 @@ def reset(app): #what gets called when reset game
 def userAnalysis(app): 
     app.rows = app.height // (app.player.radius*4) # == 9
     app.cols = app.width // (app.player.radius*4) # == 10
+
+    app.sdRows = 0 #standard deviation rows
+    app.sdRowsBounds = 0
+    app.sdCols= 0  #standard deviation cols
+    app.sdColsBounds = 0
 
     app.twoDL = []
     app.sumRow = []
@@ -198,25 +212,43 @@ def timerFired(app): #do downgrades
         #     # downgrades(app,lvl)
         #-----------------------------------
 
-    #find ball locastion, add 1 for every app.time//100 spent in there.
+    #find ball locastion, add 1 for every 10ms
     playerRow, playerCol = getCell(app, app.player.posX, app.player.posY)
     app.twoDL[playerRow][playerCol] += 1
 
-    #make 1D lists for sumRow and sumCol and sumTotal----
+    #make 1D lists for sumRow and sumCol and sumTotal
     sumLists(app)
 
     print('row',app.sumRow)
     print('col',app.sumCol)
     print('total',app.sumTotal)
 
+    app.sdRows = standardDeviation(app.sumRow)
+    app.sdRowsBounds = getCellBounds(app, app.sdRows, 0)
+    app.sdCols = standardDeviation(app.sumCol)
+    app.sdColsBounds = getCellBounds(app, 0, app.sdCols)
+
+    print(app.sdRows,app.sdCols)
+
+    # sdRowsc = standardDeviation(app.sumCol) 
+    
+    # print(sdRowsc)
+
     #-IN DEVELOPMENT------------------------------------------------------------- \/
     #use sums to get proabablity
 
-    num = random.randint(0,100)
-    # if num is in sumCol[i]/sumTotal spawn in that  col
-    # if num is in sumRow[i]/sumTotal spawn in that row
-    
+    # num = random.randint(0,100)
+    # if num is in sumCol[i]/sumTotal spawn in that col(for vert)
+    # if num is in sumRow[i]/sumTotal spawn in that row(for horz)
 
+    # get col and row of highest num???
+    
+    # then use probaility to inglucence platform generation
+    # use randome.triange(lo,hi,mode) or standard deviation????
+    #-----------------------------------------------------------------\/
+    # how to use derivation to influence spawn location???????????
+        #have spawn closer to hump?? how
+     
 
 def sumLists(app): #1d list of Rows and Cols//int of total Sum
     for row in range(app.rows):
@@ -276,7 +308,7 @@ def platformUpdates(app):
             app.invincibleTime = time.time()
 
         if platform.posX + platform.width < 0:  #summons new platforms and pops old ones
-            app.platforms.append(Platform(app)) 
+            app.platforms.append(NewPlatform(app)) 
             app.platforms.pop(i)
         else:
             i += 1
@@ -284,7 +316,7 @@ def platformUpdates(app):
 def distance(x0,y0,x1,y1):
 	return ((x1-x0)**2 + (y1-y0)**2)**.5
 
-def checkPlatformIsLegal(self,app):
+def checkPlatformIsLegal(self,app): #NOT FINFINISHED
     return
             # if self.posX - self.width < other.posX < self.posX + self.width:
             #     if distance(0, self.posY, 0, other.posY) <= 2*self.width:
@@ -293,6 +325,21 @@ def checkPlatformIsLegal(self,app):
             # if self.posY - self.height < other.posY < self.posY + self.height:
             #     if distance(self.posX, 0, other.posX, 0) <= 3*self.height:
             #         return True
+
+#citation: derived from sdRows formula
+def standardDeviation(L): #standard deviation forumla
+    total=0
+    for i in range(len(L)):
+        #sdRows = ((sum of((x[i]-avg)**2))/ len(x)-1)**.5
+        total += i * L[i]
+    avg = total/sum(L)
+    numerator = 0
+
+    for i in range(len(L)):
+        numerator += (L[i] - avg)**2
+        
+    sdRows = ((numerator)/sum(L))**0.5
+    return sdRows
 
 def redrawAll(app,canvas):
     if app.gameOver:
@@ -333,7 +380,7 @@ def drawGameOver(app,canvas):
     canvas.create_text(app.width/2,app.height/2, text = f'Final Score: {app.score}', fill = 'crimson', font = 'Helvetica 20 bold')
     canvas.create_text(app.width/2,app.height/2 + 100, text = "Press 'r' to Reset", fill = 'crimson', font = 'Helvetica 20 bold')
 
-#taken from my hw5
+#citation: taken from my hw5
 def getCell(app, x, y):
     gridWidth  = app.width
     gridHeight = app.height 
@@ -343,7 +390,7 @@ def getCell(app, x, y):
     col = int((x) / cellWidth)
     return (row, col)
 
-#taken from my hw9: tetris
+#citation: taken from my hw9: tetris
 def getCellBounds(app, row, col):
     gridWidth  = app.width 
     gridHeight = app.height 
