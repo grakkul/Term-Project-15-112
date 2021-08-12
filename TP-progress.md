@@ -72,4 +72,37 @@ algorithmic plan:
 TP 3 update
 ----
 
+Name: RunAway
+
+description: -- hasn't changed
+
+structural plan:
+	
+	Classes:
+		player info - init//gravity//control//update//draw
+		platform info - init//draw//collision//update//move
+		newPlatform info - init 
+		bonus info - init/d/raw//collision
+	Functions:
+		appStarted
+		reset
+		userAnalysis
+		keypressed
+		timerFired
+		sumLists
+		platformUpgrades
+		distance
+		standardDeviation
+		getCell
+		getCellBounds
+		redrawAll
+		drawBackground
+		drawGrid
+		drawPlatforms
+		drawPlayer
+		drawBonus
+		drawScore
+		drawGameOver
+		
+algorithmic plan: -- didn't change
 
