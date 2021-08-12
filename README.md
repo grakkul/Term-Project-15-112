@@ -2,7 +2,7 @@
 
     Name:  RunAway
     
-    Description: A 2D infinite sidescroller, avoid hitting the platforms for as long as you can to get the highest score. 
+    Description: A 2D infinite sidescroller, avoid hitting the platforms and getting those bonuses for as long as you can to get the highest score. 
     
     How to run project: File TPExperiment.py should be run in an editior, ike VsCode.
     
