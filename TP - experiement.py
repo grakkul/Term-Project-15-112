@@ -121,35 +121,59 @@ class NewPlatform(Platform): #init//spawn
             if 0 <= numRow < app.rows and 0 <= numCol <= app.cols:
                 break
 
-        numRowBounds = getCellBounds(app, numRow, 0)
-        numColBounds = getCellBounds(app, 0, numCol)
+        x0,y0,x1,y1 = getCellBounds(app, numRow, numCol)
 
         if self.choiceDirection == 0:  
-            self.spawnY = random.randint(int(numRowBounds[1]), int(numRowBounds[3]))
+            self.spawnY = random.randint(int(y0), int(y1))
             self.spawnX = random.randint(app.width - 100,app.width + 50) 
             self.posX = self.spawnX
             self.posY = self.spawnY
-            app.temp.append(self.spawnX) #check this is correcct---------------------------------------------------------------------
-            
+
+            app.temp.append(self.spawnY) #check this is correct---------------------------------------------------------------------
+           
+            print(app.temp)
         else:
-            self.spawnY = random.randint(int(numColBounds[0]), int(numColBounds[2]))
+            self.spawnY = random.randint(int(x0), int(x1))
             self.spawnX = random.randint(app.width - 100,app.width + 50) 
             self.posX = self.spawnX
             self.posY = self.spawnY
-            
+
+class Bonus(object): #init//draw//collison
+    def __init__(self, app):
+        self.posX = random.randint(50, app.width - 50)
+        self.posY = random.randint(50, app.height - 50)
+        self.radius = 15
+        self.color = 'white'
+
+    def draw(self,canvas):
+        canvas.create_oval(self.posX - self.radius, self.posY - self.radius, 
+                           self.posX + self.radius, self.posY + self.radius,
+                           fill = self.color, outline = self.color)
+
+    def collision(self, other):
+        if distance(self.posX,self.posY,other.posX,other.posY) <= self.radius + other.radius:
+            return True
+        else:
+            return False
+
 def appStarted(app):
     app.topScore = 0
+    app.backColor = 'LightSeaGreen'
     reset(app)
 
 def reset(app): #what gets called when reset game
     app.gameOver = False
     app.score = 0
+    app.bonusScore = 0
+
     app.time = 0
     app.seconds = 0
+
     app.lifes = 3
     app.invincibleTime = 0
     
     app.player = Player()
+    app.bonus = Bonus(app)
     app.platforms = []
     for i in range(random.randint(5,9)):    #how make sure spawn a distance away
         app.platforms.append(Platform(app)) 
@@ -204,7 +228,7 @@ def timerFired(app): #do downgrades
         return
 
     app.time += 100
-    app.score = app.time//1000
+    app.score = app.time//1000 + app.bonusScore
 
     if time.time() > app.invincibleTime + 3:
         app.player.invincible = False
@@ -212,21 +236,17 @@ def timerFired(app): #do downgrades
     platformUpdates(app)
     app.player.update()
     app.player.gravity(app)
-    
 
-    if app.lifes <= 0:
+    if app.bonus.collision(app.player): #checks for bonus collison
+        app.bonusScore += 5
+        app.bonus.posX = random.randint(50, app.width - 50)
+        app.bonus.posY = random.randint(50, app.height - 50)
+
+    if app.lifes <= 0: #checks to see if dead
         app.gameOver = True
 
-    if app.score > app.topScore:
+    if app.score > app.topScore: #sets topScore
         app.topScore = app.score
-
-    #if done with MVP do downgrades
-        #DOWNGRADES CALLING -------------
-        # print(app.time % 10000000000) 
-        # if app.time % 10000000000:  #TROUBLE
-        #     lvl = random.randint(0,2)
-        #     # downgrades(app,lvl)
-        #-----------------------------------
 
     #find ball locastion, add 1 for every 10ms
     playerRow, playerCol = getCell(app, app.player.posX, app.player.posY)
@@ -238,7 +258,8 @@ def timerFired(app): #do downgrades
     #find sd of rows and cols
     app.sdRows = standardDeviation(app.sumRow)
     app.sdCols = standardDeviation(app.sumCol)
-  
+
+
 def sumLists(app): #1d list of Rows and Cols//int of total Sum
     for row in range(app.rows):
         app.sumRow[row] = 0
@@ -260,22 +281,6 @@ def sumTotal(app): #total sum
                 total += num
         return total
     
-def downgrades(app,lvl): #do when MVP acheived
-    if lvl == 0:
-        return
-
-    elif lvl == 1:
-        app.backColor = app.player.color 
-        if app.score % 3:
-            app.backColor = 'white'
-    
-    elif lvl == 2:
-        for i in range(len(app.platforms)):
-            platform = app.platforms[i]
-            app.backColor = platform.color 
-            if app.score % 3:
-                app.backColor = 'white'
-
 def platformUpdates(app): # update//move//collision//spawn
     i = 0
     while i in range(len(app.platforms)):
@@ -351,11 +356,12 @@ def redrawAll(app,canvas): #draws to canvas
         drawBackground(app,canvas)
         drawGrid(app,canvas)
         drawPlatforms(app,canvas)
+        drawBonus(app,canvas)
         drawPlayer(app,canvas)
         drawScore(app,canvas)
         
 def drawBackground(app,canvas): 
-    canvas.create_rectangle(0,0,app.width,app.height, fill = 'LightSeaGreen')
+    canvas.create_rectangle(0,0,app.width,app.height, fill = app.backColor)
 
 def drawGrid(app,canvas):
     for row in range(app.rows):
@@ -372,7 +378,10 @@ def drawPlatforms(app,canvas):
 
 def drawPlayer(app,canvas): 
     app.player.draw(canvas)
-    
+
+def drawBonus(app,canvas):
+    app.bonus.draw(canvas)
+
 def drawScore(app,canvas):
     canvas.create_text(app.width/2, 20, text = f'Score: {app.score}', font = 'Helvetica 20 bold', fill = 'crimson')
 
