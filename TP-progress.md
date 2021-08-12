@@ -68,3 +68,8 @@ algorithmic plan:
 		create 1D list of sum row and col based on 2D list
 		use 1D lists to find standard deviation
 		use standard deviation to spawn platforms nearer to player
+		
+TP 3 update
+----
+
+
