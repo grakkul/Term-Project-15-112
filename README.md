@@ -7,3 +7,10 @@
     How to run project: File TP-experiment.py should be run in an editior, ike VsCode.
     
     Shortcut Commands: use 'r' to reset
+    
+    In Game Controlls:
+        'w', Up arrow key, or 'Space' - to jump
+        'd' or Right arrow key - to move right
+        'a' or Left arrow key - to move left
+        'r' - to reset
+        'h' - for homescreen
