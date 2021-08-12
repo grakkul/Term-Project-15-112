@@ -1,15 +1,3 @@
-'''
-infinate side scroller
-    - diffrent challenges as power ups
-        -you are invisible  - turn your color white for a bit
-        -ground disappering - background turns black for a bit every half second
-    - power up that makes scrolling speed back to original
-        -self.posX = app.score/2
-    - side scrolling speeds up as time goes on
-    - score = time since start
-    - keep memory of score
-    - if go off screen or fall off map you lose
-'''
 
 from cmu_112_graphics import *
 import random
@@ -113,18 +101,44 @@ class Platform(object): #init//draw//collision//update//move
         else:
             self.posY = self.posY
 
-class NewPlatform(Platform):
+class NewPlatform(Platform): #init//spawn
     def __init__(self,app):
         super().__init__(app)
-        if self.choiceDirection == 0:
-            self.spawnY = random.randint(int(app.player.posY - app.sdRowsBounds[1]), int(app.player.posY + app.sdRowsBounds[3]))
+
+        totalR=0
+        for i in range(len(app.sumRow)):
+            totalR += i * app.sumRow[i]
+        avgR = totalR/sum(app.sumRow)
+
+        totalC=0
+        for i in range(len(app.sumCol)):
+            totalC += i * app.sumCol[i]
+        avgC = totalC/sum(app.sumCol)
+
+        while True:
+            numRow = random.gauss(avgR, app.sdRows)
+            numCol = random.gauss(avgC, app.sdCols)
+            if 0 <= numRow < app.rows and 0 <= numCol <= app.cols:
+                break
+
+        numRowBounds = getCellBounds(app, numRow, 0)
+        numColBounds = getCellBounds(app, 0, numCol)
+
+        if self.choiceDirection == 0:  
+            self.spawnY = random.randint(int(numRowBounds[1]), int(numRowBounds[3]))
+            self.spawnX = random.randint(app.width - 100,app.width + 50) 
+            self.posX = self.spawnX
+            self.posY = self.spawnY
+            app.temp.append(self.spawnX) #check this is correcct---------------------------------------------------------------------
+            
         else:
-            self.spawnX = random.randint(int(app.player.posY - app.sdColsBounds[0]), int(app.player.posY + app.sdColsBounds[2]))
-
-
+            self.spawnY = random.randint(int(numColBounds[0]), int(numColBounds[2]))
+            self.spawnX = random.randint(app.width - 100,app.width + 50) 
+            self.posX = self.spawnX
+            self.posY = self.spawnY
+            
 def appStarted(app):
     app.topScore = 0
-    app.backColor = ['white','SpringGreen','DeepSkyBlue','MediumPurple','DeepPink','crimson']
     reset(app)
 
 def reset(app): #what gets called when reset game
@@ -142,7 +156,8 @@ def reset(app): #what gets called when reset game
     
     userAnalysis(app)
    
-def userAnalysis(app): 
+def userAnalysis(app): #algorithmic complexity starter
+    app.temp = []
     app.rows = app.height // (app.player.radius*4) # == 9
     app.cols = app.width // (app.player.radius*4) # == 10
 
@@ -197,6 +212,7 @@ def timerFired(app): #do downgrades
     platformUpdates(app)
     app.player.update()
     app.player.gravity(app)
+    
 
     if app.lifes <= 0:
         app.gameOver = True
@@ -219,36 +235,10 @@ def timerFired(app): #do downgrades
     #make 1D lists for sumRow and sumCol and sumTotal
     sumLists(app)
 
-    print('row',app.sumRow)
-    print('col',app.sumCol)
-    print('total',app.sumTotal)
-
+    #find sd of rows and cols
     app.sdRows = standardDeviation(app.sumRow)
-    app.sdRowsBounds = getCellBounds(app, app.sdRows, 0)
     app.sdCols = standardDeviation(app.sumCol)
-    app.sdColsBounds = getCellBounds(app, 0, app.sdCols)
-
-    print(app.sdRows,app.sdCols)
-
-    # sdRowsc = standardDeviation(app.sumCol) 
-    
-    # print(sdRowsc)
-
-    #-IN DEVELOPMENT------------------------------------------------------------- \/
-    #use sums to get proabablity
-
-    # num = random.randint(0,100)
-    # if num is in sumCol[i]/sumTotal spawn in that col(for vert)
-    # if num is in sumRow[i]/sumTotal spawn in that row(for horz)
-
-    # get col and row of highest num???
-    
-    # then use probaility to inglucence platform generation
-    # use randome.triange(lo,hi,mode) or standard deviation????
-    #-----------------------------------------------------------------\/
-    # how to use derivation to influence spawn location???????????
-        #have spawn closer to hump?? how    
-
+  
 def sumLists(app): #1d list of Rows and Cols//int of total Sum
     for row in range(app.rows):
         app.sumRow[row] = 0
@@ -286,7 +276,7 @@ def downgrades(app,lvl): #do when MVP acheived
             if app.score % 3:
                 app.backColor = 'white'
 
-def platformUpdates(app): 
+def platformUpdates(app): # update//move//collision//spawn
     i = 0
     while i in range(len(app.platforms)):
         platform = app.platforms[i]
@@ -297,7 +287,7 @@ def platformUpdates(app):
         if app.player.invincible == False:  #color switch for invisible    
             app.player.color = 'aquamarine'
         else:
-            app.player.color = 'DodgerBlue2'
+            app.player.color = 'LightSteelBlue'
 
         if platform.collides(app.player):     #collison - keeps taking too much damgae 
             if app.player.invincible == False:
@@ -311,11 +301,11 @@ def platformUpdates(app):
             app.platforms.pop(i)
         else:
             i += 1
-
-def distance(x0,y0,x1,y1):
+        
+def distance(x0,y0,x1,y1): #helper fn
 	return ((x1-x0)**2 + (y1-y0)**2)**.5
 
-#citation: derived from sdRows formula
+#citation: derived from standard deviation formula
 def standardDeviation(L): #standard deviation forumla
     total=0
     for i in range(len(L)):
@@ -331,7 +321,7 @@ def standardDeviation(L): #standard deviation forumla
     return sdRows
 
 #citation: taken from my hw5
-def getCell(app, x, y):
+def getCell(app, x, y): #helper fn
     gridWidth  = app.width
     gridHeight = app.height 
     cellWidth  = gridWidth / app.cols
@@ -341,7 +331,7 @@ def getCell(app, x, y):
     return (row, col)
 
 #citation: taken from my hw9: tetris
-def getCellBounds(app, row, col):
+def getCellBounds(app, row, col): #helper fn
     gridWidth  = app.width 
     gridHeight = app.height 
     cellWidth = gridWidth / app.cols
@@ -354,24 +344,27 @@ def getCellBounds(app, row, col):
 
     return (x0, y0, x1, y1)
 
-def redrawAll(app,canvas):
+def redrawAll(app,canvas): #draws to canvas
     if app.gameOver:
         drawGameOver(app,canvas)
     else:
         drawBackground(app,canvas)
+        drawGrid(app,canvas)
         drawPlatforms(app,canvas)
         drawPlayer(app,canvas)
         drawScore(app,canvas)
-        drawGrid(app,canvas)
-    
-def drawBackground(app,canvas):  # how to filter through???
-    # i = 0
-    # while i in range(len(app.backColor)):
-    #     if app.score % 10:
-    #         i += 1
-    #     canvas.create_rectangle(0,0,app.width,app.height, fill = app.backColor[i])
-   
-    canvas.create_rectangle(0,0,app.width,app.height, fill = app.backColor[0])
+        
+def drawBackground(app,canvas): 
+    canvas.create_rectangle(0,0,app.width,app.height, fill = 'LightSeaGreen')
+
+def drawGrid(app,canvas):
+    for row in range(app.rows):
+        for col in range(app.cols):
+            x0,y0,x1,y1 = getCellBounds(app, row, col)
+            canvas.create_rectangle(x0,y0,x1,y1, outline ="DarkCyan")
+
+            #temporary -- to help build algortithmic method
+            # canvas.create_text(x0 + app.player.radius, y0 + app.player.radius, text = app.twoDL[row][col])
 
 def drawPlatforms(app,canvas):
     for i in range(len(app.platforms)):
@@ -392,13 +385,5 @@ def drawGameOver(app,canvas):
     canvas.create_text(app.width/2,app.height/2 - 40, text = f'Best Score: {app.topScore}', fill = 'crimson', font = 'Helvetica 20 bold')
     canvas.create_text(app.width/2,app.height/2, text = f'Final Score: {app.score}', fill = 'crimson', font = 'Helvetica 20 bold')
     canvas.create_text(app.width/2,app.height/2 + 100, text = "Press 'r' to Reset", fill = 'crimson', font = 'Helvetica 20 bold')
-
-#temporary --- used in building algorithm
-def drawGrid(app,canvas):
-    for row in range(app.rows):
-        for col in range(app.cols):
-            x0,y0,x1,y1 = getCellBounds(app, row, col)
-            canvas.create_rectangle(x0,y0,x1,y1)
-            canvas.create_text(x0 + app.player.radius, y0 + app.player.radius, text = app.twoDL[row][col])
 
 runApp(width = 1000, height = 900)
