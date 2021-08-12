@@ -74,7 +74,7 @@ TP 3 update
 
 Name: RunAway
 
-description: -- hasn't changed
+description: A 2D infinite sidescroller, avoid getting hit by the platforms for as long as you can to get the highest score, don't fogret to go after bonuses to get extra points. 
 
 structural plan:
 	
