@@ -13,4 +13,4 @@
         'd' or Right arrow key - to move right
         'a' or Left arrow key - to move left
         'r' - to reset
-        'h' - for homescreen
+        'h' - to start and to go back to homescreen once started
