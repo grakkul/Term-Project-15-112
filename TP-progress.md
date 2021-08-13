@@ -103,6 +103,7 @@ structural plan:
 		drawBonus
 		drawScore
 		drawGameOver
+		drawStartScreen
 		
 algorithmic plan: -- didn't change
 
