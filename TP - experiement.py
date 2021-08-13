@@ -157,8 +157,8 @@ class Bonus(object): #init//draw//collison
             return False
 
 def appStarted(app):
+    app.started =False
     app.topScore = 0
-    app.backColor = 'LightSeaGreen'
     reset(app)
 
 def reset(app): #what gets called when reset game
@@ -207,7 +207,11 @@ def keyPressed(app,event): #player movement
 
     if key == 'r':
         reset(app)
-
+    
+    if key == 'h':
+        reset(app)
+        app.started = not app.started
+       
     if app.gameOver:
         return
 
@@ -224,6 +228,8 @@ def keyPressed(app,event): #player movement
         app.player.control(-10, 0)
 
 def timerFired(app): #do downgrades
+    if app.started == False:
+        return
     if app.gameOver:
         return
 
@@ -258,7 +264,6 @@ def timerFired(app): #do downgrades
     #find sd of rows and cols
     app.sdRows = standardDeviation(app.sumRow)
     app.sdCols = standardDeviation(app.sumCol)
-
 
 def sumLists(app): #1d list of Rows and Cols//int of total Sum
     for row in range(app.rows):
@@ -350,7 +355,9 @@ def getCellBounds(app, row, col): #helper fn
     return (x0, y0, x1, y1)
 
 def redrawAll(app,canvas): #draws to canvas
-    if app.gameOver:
+    if app.started == False:
+        drawStartScreen(app,canvas)
+    elif app.gameOver:
         drawGameOver(app,canvas)
     else:
         drawBackground(app,canvas)
@@ -361,7 +368,7 @@ def redrawAll(app,canvas): #draws to canvas
         drawScore(app,canvas)
         
 def drawBackground(app,canvas): 
-    canvas.create_rectangle(0,0,app.width,app.height, fill = app.backColor)
+    canvas.create_rectangle(0,0,app.width,app.height, fill = 'LightSeaGreen')
 
 def drawGrid(app,canvas):
     for row in range(app.rows):
@@ -394,5 +401,18 @@ def drawGameOver(app,canvas):
     canvas.create_text(app.width/2,app.height/2 - 40, text = f'Best Score: {app.topScore}', fill = 'crimson', font = 'Helvetica 20 bold')
     canvas.create_text(app.width/2,app.height/2, text = f'Final Score: {app.score}', fill = 'crimson', font = 'Helvetica 20 bold')
     canvas.create_text(app.width/2,app.height/2 + 100, text = "Press 'r' to Reset", fill = 'crimson', font = 'Helvetica 20 bold')
+    canvas.create_text(app.width/2,app.height/2 + 150, text = "Press 'h' to go to HomeScreen", fill = 'crimson', font = 'Helvetica 20 bold')
+
+def drawStartScreen(app,canvas):
+    canvas.create_rectangle(0,0,app.width,app.height, fill = 'black')
+    canvas.create_rectangle(100,50,app.width-100,app.height-100, fill = 'LightSeaGreen')
+    canvas.create_text(app.width/2,100, text = f'RUNAWAY', fill = 'black', font = 'Helvetica 46 bold')
+    canvas.create_rectangle(200, 150,app.width-200,160, fill = 'black')
+    canvas.create_text(app.width/2,app.height/2 - 100, text = f"Press 'h' to Start :)", fill = 'black', font = 'Helvetica 16 bold')
+    canvas.create_text(app.width/2,app.height/2 - 80, text = f"(or to come back here once you start)", fill = 'black', font = 'Helvetica 16 bold')
+    canvas.create_text(app.width/2,app.height/2 - 20, text = f"Press 'r' to Restart", fill = 'black', font = 'Helvetica 16 bold')
+    canvas.create_text(app.width/2,app.height/2 + 60, text = f"Use 'w,s,d' to move", fill = 'black', font = 'Helvetica 16 bold')
+    canvas.create_text(app.width/2,app.height/2 + 80, text = f"(or use the arrow keys)", fill = 'black', font = 'Helvetica 16 bold')
+    canvas.create_text(app.width/2,app.height - 200, text = f'Best Score: {app.topScore}', fill = 'black', font = 'Helvetica 20 bold')
 
 runApp(width = 1000, height = 900)
