@@ -95,6 +95,7 @@ structural plan:
 		standardDeviation
 		getCell
 		getCellBounds
+		changeBackgroundColor
 		redrawAll
 		drawBackground
 		drawGrid
